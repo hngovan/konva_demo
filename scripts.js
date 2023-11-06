@@ -55,8 +55,12 @@ let layerCount = 0;
 let selectedShapes = null;
 let lastShape = null;
 let listShapeRect = [];
+<<<<<<< HEAD
 let startTimeDown = null;
 const MIN_SHAPE = 10;
+=======
+let startTimeDown = null
+>>>>>>> e473b99c196d9024e9ffefcb13f802dbfb92519d
 
 function createRect(x, y) {
   return new Konva.Rect({
