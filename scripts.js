@@ -55,6 +55,7 @@ let layerCount = 0;
 let selectedShapes = null;
 let lastShape = null;
 let listShapeRect = [];
+let startTimeDown = null
 
 function createRect(x, y) {
   return new Konva.Rect({
@@ -359,6 +360,7 @@ function setupEventHandlers() {
 }
 
 function handleStageMouseDown(e) {
+  startTimeDown = new Date().getTime()
   // do nothing if we mousedown on any shape
   if (e.target !== stage) {
     return;
@@ -399,6 +401,11 @@ function handleStageMouseUp(e) {
   setTimeout(() => {
     selectionRectangle.visible(false);
   });
+
+  if(new Date().getTime() - startTimeDown < 150) {
+    return
+  }
+
   const shapes = stage.find(".rect");
   const box = selectionRectangle.getClientRect();
   selectedShapes = shapes.filter((shape) =>
@@ -592,25 +599,31 @@ function handleLayerDragend(e) {
 }
 
 function handleLayerTransform() {
-  if (listShapeRect.length) {
-    for (const rect of listShapeRect) {
-      rect.on("transformstart", function () {
-        console.log("Transform started for Rect " + rect.id());
-      });
-      rect.on("transform", function () {
-        console.log("Transform for Rect " + rect.id());
-      });
-      rect.on("transformend", function () {
-        console.log("Transform end for Rect " + rect.id());
-        const x = rect.x();
-        const y = rect.y();
-        const width = rect.width() * rect.scaleX();
-        const height = rect.height() * rect.scaleY();
-        console.log(x, y);
-        createLineWithHeight(width, height, x, y);
-      });
-    }
-  }
+  // if (listShapeRect.length) {
+  //   for (const rect of listShapeRect) {
+  //     rect.on("transformstart", function () {
+  //       console.log("Transform started for Rect " + rect.id());
+  //     });
+  //     rect.on("dragmove", function () {
+  //       const x = rect.x();
+  //       const y = rect.y();
+  //       const width = rect.width() * rect.scaleX();
+  //       const height = rect.height() * rect.scaleY();
+  //       createLineWithHeight(width, height, x, y);
+  //     });
+  //     rect.on("transform", function () {
+  //       const x = rect.x();
+  //       const y = rect.y();
+  //       const width = Math.round(rect.width() * rect.scaleX());
+  //       const height = Math.round(rect.height() * rect.scaleY());
+  //       console.log("Transform for Rect " + rect.id());
+  //       createLineWithHeight(width, height, x, y);
+  //     });
+  //     rect.on("transformend", function () {
+  //       console.log("Transform end for Rect " + rect.id());
+  //     });
+  //   }
+  // }
 }
 
 $(document).ready(() => {
