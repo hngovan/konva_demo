@@ -55,6 +55,8 @@ let layerCount = 0;
 let selectedShapes = null;
 let lastShape = null;
 let listShapeRect = [];
+let startTimeDown = null;
+const MIN_SHAPE = 10;
 
 function createRect(x, y) {
   return new Konva.Rect({
@@ -286,7 +288,7 @@ function formData() {
     optionsField += `<option value="${option}">${option}</option>`;
   });
   const html = `
-     <div id="box-field-${layerCount}" class="box-field p-3" onClick="findLayer(${layerCount})">
+     <div id="box-field-${layerCount}" class="box-field p-3">
        <form class="w-100">
          <div class="form-group row">
            <label
@@ -359,6 +361,7 @@ function setupEventHandlers() {
 }
 
 function handleStageMouseDown(e) {
+  startTimeDown = new Date().getTime();
   // do nothing if we mousedown on any shape
   if (e.target !== stage) {
     return;
@@ -399,6 +402,10 @@ function handleStageMouseUp(e) {
   setTimeout(() => {
     selectionRectangle.visible(false);
   });
+  if(new Date().getTime() - startTimeDown < 150 || (lastShape.attrs.width < MIN_SHAPE && lastShape.attrs.height < MIN_SHAPE)) {
+    tr.nodes([])
+    return
+  }
   const shapes = stage.find(".rect");
   const box = selectionRectangle.getClientRect();
   selectedShapes = shapes.filter((shape) =>
@@ -597,17 +604,24 @@ function handleLayerTransform() {
       rect.on("transformstart", function () {
         console.log("Transform started for Rect " + rect.id());
       });
-      rect.on("transform", function () {
-        console.log("Transform for Rect " + rect.id());
-      });
-      rect.on("transformend", function () {
-        console.log("Transform end for Rect " + rect.id());
+      rect.on("dragmove", function () {
         const x = rect.x();
         const y = rect.y();
         const width = rect.width() * rect.scaleX();
         const height = rect.height() * rect.scaleY();
+        createLineWithHeight(width, height, x, y);
+      });
+      rect.on("transform", function () {
+        const x = rect.x();
+        const y = rect.y();
+        const width = Math.round(rect.width() * rect.scaleX());
+        const height = Math.round(rect.height() * rect.scaleY());
+        console.log("Transform for Rect " + rect.id());
         console.log(x, y);
         createLineWithHeight(width, height, x, y);
+      });
+      rect.on("transformend", function () {
+        console.log("Transform end for Rect " + rect.id());
       });
     }
   }
