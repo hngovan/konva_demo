@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/konva@9.2.2/konva.min.js"></script>
+    <title>Konva Select and Transform Demo</title>
+  </head>
+  <body>
+    <div class="d-flex m-3" style="gap: 10px">
+      <button id="move" class="btn btn-primary">Move</button>
+      <button id="shape" class="btn btn-primary">Shape Tool</button>
+    </div>
+    <div class="row mx-0">
+      <div class="col box">
+        <!-- form field -->
+      </div>
+      <div class="col-8">
+        <div class="image-upload">
+          <div class="image-view">
+            <img class="image-view-file" src="./assets/yoda.png" alt="image upload" />
+          </div>
+          <div id="stage-parent">
+            <div id="container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="scripts.js"></script>
+</html>
