@@ -402,6 +402,7 @@ function handleStageMouseUp(e) {
   setTimeout(() => {
     selectionRectangle.visible(false);
   });
+
   if (
     new Date().getTime() - startTimeDown < 150 ||
     (lastShape.attrs.width < MIN_SHAPE && lastShape.attrs.height < MIN_SHAPE)
