@@ -56,6 +56,7 @@ let selectedShapes = null;
 let lastShape = null;
 let listShapeRect = [];
 let startTimeDown = null
+const MIN_SHAPE = 10
 
 function createRect(x, y) {
   return new Konva.Rect({
@@ -402,7 +403,8 @@ function handleStageMouseUp(e) {
     selectionRectangle.visible(false);
   });
 
-  if(new Date().getTime() - startTimeDown < 150) {
+  if(new Date().getTime() - startTimeDown < 150 || (lastShape.attrs.width < MIN_SHAPE && lastShape.attrs.height < MIN_SHAPE)) {
+    tr.nodes([])
     return
   }
 
