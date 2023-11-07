@@ -63,6 +63,7 @@ function createRect(x, y) {
     x: x,
     y: y,
     strokeWidth: 2,
+    strokeScaleEnabled: false, // resize not break
     stroke: Konva.Util.getRandomColor(),
     name: "rect",
     id: "myRect_" + layerCount,
@@ -76,18 +77,20 @@ function createTooltip(x, y, target) {
     y: y - 25,
   });
   tooltip.fill(target.stroke());
-  tooltip.text(target.id());
+  tooltip.text(target?.id());
   tooltip.show();
 }
 
-function createLineWithHeight(width, height, x, y) {
-  bottomText.text(width + " x " + height);
+function createLineWithHeight(width, height, x, y, scaleX, scaleY) {
+  const widthLine = scaleX ? width * scaleX : width;
+  const heightLine = scaleY ? height * scaleY : height;
+  bottomText.text(Math.round(widthLine) + " x " + Math.round(heightLine));
   bottomLabel.add(bottomText);
   bottomLabel.position({
     x: isDraw
-      ? x - width / 2 - bottomText.width() / 2
-      : x + width / 2 - bottomText.width() / 2,
-    y: isDraw ? y + 10 : y + height + 10,
+      ? x - widthLine / 2 - bottomText.width() / 2
+      : x + widthLine / 2 - bottomText.width() / 2,
+    y: isDraw ? y + 10 : y + heightLine + 10,
   });
   bottomLabel.show();
 }
@@ -336,7 +339,9 @@ function formData() {
         shape.attrs.width,
         shape.attrs.height,
         shape.attrs.x,
-        shape.attrs.y
+        shape.attrs.y,
+        shape.attrs?.scaleX,
+        shape.attrs?.scaleY
       );
     },
     function () {
@@ -456,7 +461,9 @@ function handleStageMouseMove(e) {
     width: Math.max(x2 - x1),
     height: Math.max(y2 - y1),
   });
-  createLineWithHeight(Math.abs(x2 - x1), Math.abs(y2 - y1), x2, y2);
+  if (e.target.attrs.strokeWidth === 2) {
+    createLineWithHeight(Math.abs(x2 - x1), Math.abs(y2 - y1), x2, y2);
+  }
 }
 
 function handleStageClick(e) {
@@ -514,12 +521,16 @@ function handleLayerMouseMove(e) {
   // update tooltip
   createTooltip(shape.attrs.x, shape.attrs.y, shape);
   // update Line With and Height
-  createLineWithHeight(
-    shape.attrs.width,
-    shape.attrs.height,
-    shape.attrs.x,
-    shape.attrs.y
-  );
+  if (shape.attrs.strokeWidth === 2) {
+    createLineWithHeight(
+      shape.attrs.width,
+      shape.attrs.height,
+      shape.attrs.x,
+      shape.attrs.y,
+      shape.attrs?.scaleX,
+      shape.attrs?.scaleY
+    );
+  }
 }
 
 function handleLayerMouseOut(e) {
@@ -606,7 +617,7 @@ function handleLayerTransform() {
   if (listShapeRect.length) {
     for (const rect of listShapeRect) {
       rect.on("transformstart", function () {
-        console.log("Transform started for Rect " + rect.id());
+        // console.log("Transform started for Rect " + rect.id());
       });
       rect.on("dragmove", function () {
         const x = rect.x();
@@ -615,17 +626,19 @@ function handleLayerTransform() {
         const height = rect.height() * rect.scaleY();
         createLineWithHeight(width, height, x, y);
       });
+      rect.on("mousemove", function (e) {
+        e.evt.preventDefault();
+        // console.log(e.target);
+      });
       rect.on("transform", function () {
         const x = rect.x();
         const y = rect.y();
-        const width = Math.round(rect.width() * rect.scaleX());
-        const height = Math.round(rect.height() * rect.scaleY());
-        console.log("Transform for Rect " + rect.id());
-        console.log(x, y);
+        const width = rect.width() * rect.scaleX();
+        const height = rect.height() * rect.scaleY();
         createLineWithHeight(width, height, x, y);
       });
       rect.on("transformend", function () {
-        console.log("Transform end for Rect " + rect.id());
+        // console.log("Transform end for Rect " + rect.id());
       });
     }
   }
@@ -647,25 +660,6 @@ $(document).ready(() => {
   fitStageIntoParentContainer();
 
   setupEventHandlers();
-
-  // $(document).on("keydown", (e) => {
-  //   if ((e.keyCode === 8 || e.keyCode === 46) && lastShape) {
-  //     tr.nodes([]);
-  //     if (Array.isArray(lastShape)) {
-  //       // If lastShape is an array, loop through its elements and destroy them
-  //       $.each(lastShape, function (index, shape) {
-  //         shape.destroy();
-  //       });
-  //     } else {
-  //       // If lastShape is not an array, destroy it
-  //       lastShape.destroy();
-  //     }
-  //     lastShape = null;
-  //     layer.draw();
-  //     // stageToJson = stage.toJSON();
-  //     // localStorage.setItem("jsonStage", stageToJson);
-  //   }
-  // });
 
   $("#move").on("click", () => {
     isSelectionRectangle = true;
