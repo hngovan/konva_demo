@@ -1,6 +1,13 @@
 var sceneWidth = $("#container").width();
 var sceneHeight = 500;
 const group = new Konva.Group();
+let jsonStage = null;
+const LoadDataAPI = JSON.parse(localStorage.getItem("jsonStage"));
+const arrLoadDataAPI = LoadDataAPI
+  ? LoadDataAPI.children[0].children[0].children.filter(
+      (item) => item.className === "Rect" && item.attrs.label !== "selectedRect"
+    )
+  : [];
 const stage = new Konva.Stage({
   container: "container",
   width: sceneWidth,
@@ -27,6 +34,7 @@ const tr = new Konva.Transformer({
 // add a new feature, lets add ability to draw selection rectangle
 const selectionRectangle = new Konva.Rect({
   visible: false,
+  label: "selectedRect",
 });
 const tooltip = new Konva.Text({
   text: "",
@@ -54,20 +62,24 @@ let x1, y1, x2, y2;
 let layerCount = 0;
 let selectedShapes = null;
 let lastShape = null;
-let listShapeRect = [];
+let listShapeRect = arrLoadDataAPI.length ? arrLoadDataAPI : [];
 let startTimeDown = null;
 const MIN_SHAPE = 10;
 
-function createRect(x, y) {
+function createRect(x, y, options = {}) {
   return new Konva.Rect({
     x: x,
     y: y,
+    width: 0,
+    height: 0,
     strokeWidth: 2,
     strokeScaleEnabled: false, // resize not break
     stroke: Konva.Util.getRandomColor(),
     name: "rect",
     id: "myRect_" + layerCount,
+    label: "rect_" + layerCount,
     draggable: true,
+    ...options,
   });
 }
 
@@ -77,7 +89,7 @@ function createTooltip(x, y, target) {
     y: y - 25,
   });
   tooltip.fill(target.stroke());
-  tooltip.text(target?.id());
+  tooltip.text(target?.attrs.label);
   tooltip.show();
 }
 
@@ -270,7 +282,7 @@ function fitStageIntoParentContainer() {
   stage.scale({ x: scale, y: scale });
 }
 
-function formData() {
+function formData(shapeOptions = {}) {
   const options = [
     "TEXT",
     "BUTTON",
@@ -302,8 +314,9 @@ function formData() {
            </label>
            <div class="col-xl-8">
              <input
-               type="email"
+               type="text"
                class="form-control form-control"
+               value="${shapeOptions.label}"
                id="control_name_${layerCount}"
              />
            </div>
@@ -330,9 +343,10 @@ function formData() {
   const idValue = $newForm.attr("id");
   const idParts = idValue.split("-");
   const lastNumber = idParts[idParts.length - 1];
+  const shape = stage.find("#myRect_" + lastNumber)[0];
+
   $newForm.hover(
     function () {
-      const shape = stage.find("#myRect_" + lastNumber)[0];
       tr.nodes([shape]);
       createTooltip(shape.attrs.x, shape.attrs.y, shape);
       createLineWithHeight(
@@ -350,6 +364,20 @@ function formData() {
       bottomLabel.hide();
     }
   );
+
+  const handleInputChangeDebounced = _.debounce(function (inputElement) {
+    // console.log(`Debounced input value changed: ${inputElement}`);
+    shape.setAttr("label", inputElement);
+    jsonStage = stage.toJSON();
+    localStorage.setItem("jsonStage", jsonStage);
+    debugger
+  }, 300);
+
+  $newForm.find("input").on("input", function () {
+    const inputValue = $(this).val();
+    handleInputChangeDebounced(inputValue);
+  });
+
   layerCount++;
 }
 
@@ -415,6 +443,7 @@ function handleStageMouseUp(e) {
     tr.nodes([]);
     return;
   }
+
   const shapes = stage.find(".rect");
   const box = selectionRectangle.getClientRect();
   selectedShapes = shapes.filter((shape) =>
@@ -426,6 +455,8 @@ function handleStageMouseUp(e) {
     lastShape = selectedShapes;
     listShapeRect.push(selectedRect);
     formData();
+    jsonStage = stage.toJSON();
+    localStorage.setItem("jsonStage", jsonStage);
   }
   handleLayerTransform();
 }
@@ -613,32 +644,32 @@ function handleLayerDragend(e) {
   layer.find(".guid-line").forEach((l) => l.destroy());
 }
 
-function handleLayerTransform() {
-  if (listShapeRect.length) {
-    for (const rect of listShapeRect) {
-      rect.on("transformstart", function () {
-        // console.log("Transform started for Rect " + rect.id());
-      });
+function handleLayerTransform(rects = listShapeRect) {
+  if (rects.length) {
+    for (const rect of rects) {
+      debugger
       rect.on("dragmove", function () {
         const x = rect.x();
         const y = rect.y();
         const width = rect.width() * rect.scaleX();
         const height = rect.height() * rect.scaleY();
         createLineWithHeight(width, height, x, y);
+        jsonStage = stage.toJSON();
+        localStorage.setItem("jsonStage", jsonStage);
       });
       rect.on("mousemove", function (e) {
         e.evt.preventDefault();
         // console.log(e.target);
       });
       rect.on("transform", function () {
+        console.log(111);
         const x = rect.x();
         const y = rect.y();
         const width = rect.width() * rect.scaleX();
         const height = rect.height() * rect.scaleY();
         createLineWithHeight(width, height, x, y);
-      });
-      rect.on("transformend", function () {
-        // console.log("Transform end for Rect " + rect.id());
+        jsonStage = stage.toJSON();
+        localStorage.setItem("jsonStage", jsonStage);
       });
     }
   }
@@ -656,7 +687,16 @@ $(document).ready(() => {
   group.add(selectionRectangle, bottomLabel, bottomText, tooltip, tr);
   layer.add(group);
   stage.add(layer);
+  if (arrLoadDataAPI.length) {
+    const rects = arrLoadDataAPI.map(function (item) {
+      const rect = createRect(0,0, item.attrs)
+      group.add(rect);
+      formData(item.attrs);
+      return rect
+    });
+    handleLayerTransform(rects)
 
+  }
   fitStageIntoParentContainer();
 
   setupEventHandlers();
