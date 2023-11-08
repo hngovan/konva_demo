@@ -5,7 +5,11 @@ let jsonStage = null;
 const LoadDataAPI = JSON.parse(localStorage.getItem("jsonStage"));
 const arrLoadDataAPI = LoadDataAPI
   ? LoadDataAPI.children[0].children[0].children.filter(
-      (item) => item.className === "Rect" && item.attrs.label !== "selectedRect"
+      (item) =>
+        item.className === "Rect" &&
+        item.attrs.label !== "selectedRect" &&
+        item.attrs.width !== undefined &&
+        item.attrs.height !== undefined
     )
   : [];
 const stage = new Konva.Stage({
@@ -316,7 +320,7 @@ function formData(shapeOptions = {}) {
              <input
                type="text"
                class="form-control form-control"
-               value="${shapeOptions.label}"
+               value="${shapeOptions?.label ? shapeOptions?.label : ""}"
                id="control_name_${layerCount}"
              />
            </div>
@@ -366,11 +370,8 @@ function formData(shapeOptions = {}) {
   );
 
   const handleInputChangeDebounced = _.debounce(function (inputElement) {
-    // console.log(`Debounced input value changed: ${inputElement}`);
     shape.setAttr("label", inputElement);
-    jsonStage = stage.toJSON();
-    localStorage.setItem("jsonStage", jsonStage);
-    debugger
+    saveData();
   }, 300);
 
   $newForm.find("input").on("input", function () {
@@ -455,10 +456,8 @@ function handleStageMouseUp(e) {
     lastShape = selectedShapes;
     listShapeRect.push(selectedRect);
     formData();
-    jsonStage = stage.toJSON();
-    localStorage.setItem("jsonStage", jsonStage);
+    saveData();
   }
-  handleLayerTransform();
 }
 
 function handleStageMouseMove(e) {
@@ -647,32 +646,29 @@ function handleLayerDragend(e) {
 function handleLayerTransform(rects = listShapeRect) {
   if (rects.length) {
     for (const rect of rects) {
-      debugger
       rect.on("dragmove", function () {
         const x = rect.x();
         const y = rect.y();
         const width = rect.width() * rect.scaleX();
         const height = rect.height() * rect.scaleY();
         createLineWithHeight(width, height, x, y);
-        jsonStage = stage.toJSON();
-        localStorage.setItem("jsonStage", jsonStage);
-      });
-      rect.on("mousemove", function (e) {
-        e.evt.preventDefault();
-        // console.log(e.target);
+        saveData();
       });
       rect.on("transform", function () {
-        console.log(111);
         const x = rect.x();
         const y = rect.y();
         const width = rect.width() * rect.scaleX();
         const height = rect.height() * rect.scaleY();
         createLineWithHeight(width, height, x, y);
-        jsonStage = stage.toJSON();
-        localStorage.setItem("jsonStage", jsonStage);
+        saveData();
       });
     }
   }
+}
+
+function saveData() {
+  jsonStage = stage.toJSON();
+  localStorage.setItem("jsonStage", jsonStage);
 }
 
 $(document).ready(() => {
@@ -687,16 +683,17 @@ $(document).ready(() => {
   group.add(selectionRectangle, bottomLabel, bottomText, tooltip, tr);
   layer.add(group);
   stage.add(layer);
+
   if (arrLoadDataAPI.length) {
     const rects = arrLoadDataAPI.map(function (item) {
-      const rect = createRect(0,0, item.attrs)
+      const rect = createRect(0, 0, item.attrs);
       group.add(rect);
       formData(item.attrs);
-      return rect
+      return rect;
     });
-    handleLayerTransform(rects)
-
+    handleLayerTransform(rects);
   }
+
   fitStageIntoParentContainer();
 
   setupEventHandlers();
