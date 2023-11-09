@@ -708,4 +708,23 @@ $(document).ready(() => {
   });
 
   window.addEventListener("resize", fitStageIntoParentContainer);
+
+  // $(document).on("keydown", (e) => {
+  //   if ((e.keyCode === 8 || e.keyCode === 46) && lastShape) {
+  //     tr.nodes([]);
+  //     if (Array.isArray(lastShape)) {
+  //       // If lastShape is an array, loop through its elements and destroy them
+  //       $.each(lastShape, function (index, shape) {
+  //         shape.destroy();
+  //       });
+  //     } else {
+  //       // If lastShape is not an array, destroy it
+  //       lastShape.destroy();
+  //     }
+  //     lastShape = null;
+  //     layer.draw();
+  //     // stageToJson = stage.toJSON();
+  //     // localStorage.setItem("jsonStage", stageToJson);
+  //   }
+  // });
 });
